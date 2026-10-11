@@ -20,6 +20,26 @@
             lockFile = ./Cargo.lock;
           };
 
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+          ];
+
+          buildInputs = with pkgs; [
+            wayland
+            libxkbcommon
+          ];
+
+          postFixup = ''
+            patchelf --add-rpath ${
+              pkgs.lib.makeLibraryPath (with pkgs; [
+                wayland
+                libxkbcommon
+                vulkan-loader
+                libGL
+              ])
+            } $out/bin/khoi
+          '';
+
           doCheck = false;
         };
       in
@@ -28,10 +48,28 @@
 
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            cargo cargo-edit rustc rust-analyzer rustfmt
+            cargo cargo-edit rustc rust-analyzer rustfmt clippy
             tokei
             nil
+
+            # Wayland
+            pkg-config
+            wayland
+            wayland-protocols
+            libxkbcommon
+
+            # GPU (wgpu)
+            vulkan-loader
+            vulkan-tools
+            libGL
           ];
+
+          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+            pkgs.wayland
+            pkgs.libxkbcommon
+            pkgs.vulkan-loader
+            pkgs.libGL
+          ] + ":/run/opengl-driver/lib";
         };
       }
     );
