@@ -1,0 +1,32 @@
+name: Lint with Nix
+run-name: Lint khoi with Nix by ${{ github.actor }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    name: Clippy and check
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
+
+      - name: Cache Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Cargo check
+        run: nix develop --command cargo check --all-targets --locked
+
+      - name: Cargo clippy
+        run: nix develop --command cargo clippy --all-targets --locked -- -D warnings
